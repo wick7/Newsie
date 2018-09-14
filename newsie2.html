@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Nanum+Gothic" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Quattrocento" rel="stylesheet">
+        <title>Newsie</title>
+
+        <!-- Fonts -->
+       
+
+        <!-- Styles -->
+        <style>
+
+            *,
+            *::before,
+            *::after {
+                margin: 0;
+                padding: 0;
+                box-sizing: inherit;
+            }
+
+            body {
+                max-width: 114rem;
+                background-color: light grey;
+                box-sizing: border-box;
+                line-height: 1.7;
+            }
+
+            .nav {
+                position: relative;
+                margin: 0;
+                width: 100%;
+                height: 5rem;
+                background: linear-gradient(to right, #8E2DE2, #4A00E0); 
+            }
+
+            .title {
+                color: white;
+                padding: 12px;
+                font-family: 'Nanum Gothic', sans-serif;"
+            }
+
+            .dropdown {
+               margin-top: 2rem;
+               text-align: center;
+            }
+
+            .dropdown-content {
+                background: linear-gradient(to right, #8E2DE2, #4A00E0); 
+                height: 3rem;
+                font-size: 1rem;
+                color: white;
+                box-shadow: 10px 10px 20px rgba(0,0,0,.2);
+            }
+
+            .dd-text {
+                color: white;
+            }
+
+            /*  */
+
+            .search {
+                margin-top: 2rem;
+                text-align: center;
+            }
+
+            .autocomplete {
+            /*the container must be positioned relative:*/
+            position: relative;
+            display: inline-block;
+            }
+            input {
+            border: 1px solid transparent;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-size: 16px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,.2);
+            }
+            input[type=text] {
+            background-color: #f1f1f1;
+            width: 100%;
+            }
+            input[type=submit] {
+            color: #fff;
+            }
+            .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+            }
+            .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff; 
+            border-bottom: 1px solid #d4d4d4; 
+            }
+            .autocomplete-items div:hover {
+            /*when hovering an item:*/
+            background-color: #e9e9e9; 
+            }
+            .autocomplete-active {
+            /*when navigating through the items using the arrow keys:*/
+            background-color: DodgerBlue !important; 
+            color: #ffffff; 
+            }
+
+            .sub-btn {
+                background: linear-gradient(to right, #8E2DE2, #4A00E0); 
+                color:white;
+                font-family: 'Nanum Gothic', sans-serif;
+                margin-bottom: 5rem;
+            }
+
+            @media screen and (max-width: 600px) {
+                .card {
+                    width: 100%;
+                }
+
+                .sub-btn {
+                    margin-top: 1rem;
+                    width: 80%;
+                }
+            }
+
+
+           
+
+        </style>
+
+    </head>
+
+<body onload="sourceNames()">
+
+    <div class="nav">
+        <h1 class="title">Newsie</h1>
+    </div>
+
+    <div class="dropdown">
+        <select id="select" onchange="callMe(value)" class="dropdown-content" style="font-family: 'Nanum Gothic', sans-serif;">
+            <option value='default' class="dd-text">Pick a Publication</option>
+        </select>
+    </div>
+    
+
+    <div id="listing"></div>
+
+</body>
+    
+    <script>
+
+        // Selection of publication takes place
+
+        function sourceNames() {
+
+            var idArry = [];
+            var nameArry = [];
+
+            fetch('https://newsapi.org/v2/sources?apiKey=97c55d6f78ef4b89815173a70fd9b52a')
+            .then((res) => res.json())
+            .then((data) => {
+                var select = document.getElementById('select'), data;
+                console.log(data)
+                for(var i=0; i< data.sources.length; i++) {
+                    var sourceName = data.sources[i].name;
+                    var sourceId = data.sources[i].id;
+                    var option = document.createElement('OPTION');
+                    txt = document.createTextNode(sourceName)
+                    option.appendChild(txt)
+                    option.setAttribute("value", sourceId);
+                    // option.setAttribute("onChange", `callMe('${sourceId}')`);
+                    select.insertBefore(option,select.lastChild);
+                    // emtArry.push({'id': sourceId, 'pub': sourceName});
+                    idArry.push(sourceId);
+                    nameArry.push(sourceName);
+                    
+                }
+            }).catch(error => {
+                    throw(error);
+                    console.log(error);
+                    console.log('error');
+                }); 
+                console.log(idArry)
+                console.log(nameArry)
+                autocomplete(document.getElementById("myInput"), nameArry, idArry);  
+        }
+       
+  
+        // Takes in selected news publication source and fetches it. Calls deletNodes to refresh listing
+        
+        function callMe(arg) {
+            console.log("from Me " + arg)
+            console.log('called')
+            fetch('https://newsapi.org/v2/top-headlines?sources=+' + arg + '&apiKey=97c55d6f78ef4b89815173a70fd9b52a')
+            .then((res) => res.json())
+            .then((data) => {
+                var listing = document.getElementById('listing'), data;
+                console.log(data)
+                listing.setAttribute("style", "width:100%; display:flex; flex-wrap:wrap; justify-content: space-between; flex-direction:column;");
+                for(var i=0; i< data.articles.length; i++) {
+                    // var neEl = document.createElement('div');
+                    var altImage = 'https://images.pexels.com/photos/261949/pexels-photo-261949.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940';
+                    var titles = data.articles[i].title;
+                    var image = data.articles[i].urlToImage;
+                    var publisher = data.articles[i].source.name;
+                    var pubAt = data.articles[i].publishedAt;
+                    var descript = data.articles[i].description;
+                    var link = data.articles[i].url;
+                    var block = `
+                    
+                    <div class="card" 
+                         style="
+                            position: relative;
+                            margin-top:1.4rem;
+                            
+                            text-align:center;
+                            flex: 1;
+                            background-color:;
+                            order:${i}">
+
+                        <h1 
+                          style="
+                            border-left: 1px solid black; 
+                            border-right: 1px solid black;
+                            font-family: 'Nanum Gothic', sans-serif;
+                            font-size:2.1rem;
+                            margin-left: 4rem;
+                            margin-right: 4rem;
+                            ">${publisher}</h1> 
+
+                        <div 
+                          style="
+                            font-family: 'Nanum Gothic', sans-serif;
+                            ">${getDate(pubAt)}</div>
+
+                        
+                        
+                        <a href="${link}" target="blank__" style="text-decoration:none;color: inherit;"><h4
+                            style="
+                            font-family: 'Quattrocento', serif;
+                            font-size:1.2rem;
+                            margin: 1rem;
+                            
+                            "><b>${titles}</b></h4></a>
+
+                        <div style="border:1px solid black;width:80%;margin-left:2.5rem;margin-bottom:1rem;"></div>
+
+                        <p 
+                          style="
+                            font-family: 'Nanum Gothic', sans-serif;
+                            margin:1rem; 
+                            ">${isDescNull(descript)}<a href="${link}" target="blank__" style="text-decoration:none;color:black;"> Read More</a></p>
+
+                        <a href="${link}" target="blank__"><img class="art-img" src="${isImageNull(image)}" alt="Opps Something Happened"                     style="
+                            box-shadow: 10px 10px 20px rgba(0,0,0,.2);
+                            width:100%;
+                            height:70%;
+                            margin-bottom:2rem;
+                            "></a>
+                        
+                        
+                        
+                    </div>`;
+                    
+                    listing.innerHTML += block;
+                    
+                }
+            }).catch(error => {
+                    throw(error);
+                    console.log(error);
+                    console.log('error');
+                });
+                
+            deleteNodes()
+        }
+
+        //Deletes Previous News Articles after new publication is selected.
+
+        function deleteNodes() {
+            
+            // var listing = document.getElementById('listing');
+            var children = listing.childNodes;
+            console.log(children)
+            var list = document.getElementById("listing");
+            while (list.firstChild) {
+                list.removeChild(list.firstChild);
+            }
+        }
+
+        // Switches to alternative image is url is null or doesnt have http as first bit
+
+        function isImageNull(img) {
+            // console.log("this is img " + img);
+            var altImage = 'https://images.pexels.com/photos/261949/pexels-photo-261949.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940';
+            if (img === null) {return altImage} // Checks if urltoImg is null otherwise error will occurr with isHttp substr value below
+            var isHttp = img.substr(0, 4) //Sometimes this is null which affects below
+            console.log(isHttp);
+            
+            if (img === null) {
+                return altImage
+            }else if (isHttp !== 'http') {
+                return altImage
+            }else {
+                return img
+            }
+        }
+
+        function getDate(pubTime){
+           var monthDate = pubTime.substr(5, 5)
+           console.log(monthDate)
+           return monthDate
+        }
+
+        function isDescNull(des) {
+            console.log("this is the description" + des)
+            if (des === null || des === "") {
+                return ''
+            }else {
+                return des + '..... '
+            }
+        }
+
+
+
+
+function getFormData(){
+        console.log("get form Data")
+        var currValue = document.getElementById('myInput').value;
+        var currAlt = document.getElementById('myInput').alt;
+        callMe(currAlt)
+        reset();
+    }
+
+function reset() {
+    document.getElementById('myInput').value="";
+    return true;
+}
+ 
+    </script>
+
+</html>
+
+
